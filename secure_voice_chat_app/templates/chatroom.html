@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Audio Chat | Giao tiếp bảo mật</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4cc9f0;
+      --primary-dark: #3a0ca3;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --warning: #f8961e;
+      --info: #4895ef;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --light-gray: #e9ecef;
+      --dark-gray: #495057;
+      --bg-color: #f5f7fb;
+      --card-bg: #ffffff;
+      --border-radius: 12px;
+      --border-radius-sm: 8px;
+      --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --box-shadow-lg: 0 15px 40px rgba(0, 0, 0, 0.12);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --transition-fast: all 0.15s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--dark);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    /* Header styles */
+    .app-header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeInDown 0.6s ease;
+    }
+
+    .app-title {
+      font-size: 2.5rem;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    .app-subtitle {
+      color: var(--gray);
+      font-size: 1.1rem;
+      font-weight: 400;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Role selection */
+    .role-selection {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      animation: fadeIn 0.8s ease;
+    }
+
+    .role-selection label {
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 1.1rem;
+    }
+
+    .role-select {
+      padding: 12px 20px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--border-radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      background-color: white;
+      color: var(--dark);
+      cursor: pointer;
+      transition: var(--transition);
+      min-width: 200px;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+    }
+
+    .role-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    /* Chat container */
+    .chat-container {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .chatbox {
+      background: var(--card-bg);
+      width: 500px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      transition: none !important;
+      height: 700px;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .chatbox.active {
+      
+      display: flex;
+    }
+
+    .chatbox.highlight {
+      box-shadow: 0 0 0 3px var(--primary-light), var(--box-shadow-lg);
+      animation: pulse 2s infinite;
+    }
+
+    /* Chat header */
+    .chat-header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 20px 25px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+
+    .chat-header .status {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(5px);
+      color: white;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #38a169;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    /* Chat messages area */
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      background-color: #fafbff;
+    }
+
+    /* Custom scrollbar */
+    .chat-messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Message styles */
+    .message {
+      max-width: 85%;
+      padding: 16px;
+      border-radius: var(--border-radius-sm);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      opacity: 1;
+      transform: none;
+    }
+
+    .sent {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+
+    .received {
+      background: white;
+      color: var(--dark);
+      align-self: flex-start;
+      border: 1px solid var(--light-gray);
+      border-bottom-left-radius: 5px;
+    }
+
+    .message:nth-child(odd) {
+      animation-delay: 0.1s;
+    }
+
+    .message:nth-child(even) {
+      animation-delay: 0.2s;
+    }
+
+    .message-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+
+    .message-info-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .message-info-item svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .sent .message-info-item {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .received .message-info-item {
+      color: var(--gray);
+    }
+
+    /* Chat input area */
+    .chat-input {
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 15px;
+      background-color: white;
+      border-top: 1px solid var(--light-gray);
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    /* File input styling */
+    .file-input-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--border-radius-sm);
+      border: 1px dashed var(--light-gray);
+      padding: 12px;
+      text-align: center;
+      transition: var(--transition);
+      background-color: #f8f9fa;
+    }
+
+    .file-input-container:hover {
+      border-color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .file-input-container.has-file {
+      border-color: var(--success);
+      background-color: rgba(76, 201, 240, 0.05);
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--gray);
+      font-size: 0.95rem;
+      transition: var(--transition-fast);
+    }
+
+    .file-input-container:hover .file-input-label {
+      color: var(--primary);
+    }
+
+    .file-input-container.has-file .file-input-label {
+      color: var(--success);
+    }
+
+    input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    /* Button styles */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--border-radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 120px;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      background: var(--light-gray);
+      color: var(--gray);
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .btn-record {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      flex: 1;
+    }
+
+    .btn-record:hover {
+      background: rgba(67, 97, 238, 0.1);
+    }
+
+    .btn-record.recording {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    .btn-record.recording:hover {
+      background: #e5177e;
+    }
+
+    .btn-stop {
+      background: var(--danger);
+      flex: 1;
+    }
+
+    .btn-stop:hover {
+      background: #e5177e;
+    }
+
+    .btn-icon {
+      font-size: 1.1rem;
+    }
+
+    /* Log area */
+    .log-area {
+      background: #f8f9fa;
+      padding: 14px;
+      border-radius: var(--border-radius-sm);
+      font-size: 0.9rem;
+      color: var(--gray);
+      max-height: 100px;
+      overflow-y: auto;
+      border: 1px solid var(--light-gray);
+      font-family: 'Courier New', monospace;
+      transition: var(--transition);
+    }
+
+    .log-area.loading {
+      background: linear-gradient(90deg, #f8f9fa, #e9ecef, #f8f9fa);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    /* Timestamp */
+    .timestamp {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    .received .timestamp {
+      color: var(--gray);
+    }
+
+    /* Decrypt button */
+    .decrypt-btn {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-top: 10px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .decrypt-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .decrypt-btn:active {
+      transform: translateY(0);
+    }
+
+    .decrypt-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .decrypt-btn.loading::after {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+      margin-left: 5px;
+    }
+
+    /* Audio player */
+    .audio-player {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: var(--border-radius-sm);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      transition: var(--transition);
+    }
+
+    .audio-player:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* File preview */
+    .file-preview {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--light-gray);
+    }
+
+    .file-preview pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: var(--dark);
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.8rem;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1200px) {
+      .chat-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .chatbox {
+        width: 100%;
+        max-width: 600px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      
+      .app-title {
+        font-size: 2rem;
+      }
+      
+      .chat-input-row {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .role-selection {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .role-select {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <h1 class="app-title">Secure Audio Chat</h1>
+    <p class="app-subtitle">Giao tiếp âm thanh được mã hóa đầu cuối với công nghệ bảo mật tiên tiến</p>
+  </div>
+
+  <div class="role-selection">
+    <label for="role"><strong>Chọn vai trò của bạn:</strong></label>
+    <select id="role" class="role-select" onchange="switchRole(this.value)">
+      <option value="">-- Chọn vai trò --</option>
+      <option value="A">User A</option>
+      <option value="B">User B</option>
+    </select>
+  </div>
+
+  <div class="chat-container">
+    <!-- Chatbox for User A -->
+    <div class="chatbox" id="box-A">
+      <div class="chat-header">
+        <span><i class="fas fa-user-circle"></i> User A</span>
+        <span class="status"><span class="status-dot"></span> Đang hoạt động</span>
+      </div>
+      <div class="chat-messages" id="chat-A"></div>
+      <div class="chat-input">
+        <div class="chat-input-row">
+          <div class="file-input-container" id="file-container-A">
+            <label class="file-input-label" for="audio-A">
+              <i class="fas fa-file-upload"></i> Chọn file âm thanh hoặc văn bản
+            </label>
+            <input type="file" id="audio-A" accept="*" onchange="updateFileInput('A')">
+          </div>
+          <button class="btn" onclick="sendAudio('A')">
+            <i class="fas fa-paper-plane"></i> Gửi
+          </button>
+        </div>
+        <div class="chat-input-row">
+          <button class="btn btn-record" id="record-btn-A" onclick="startRecording('A')">
+            <i class="fas fa-microphone"></i> Ghi âm
+          </button>
+          <button class="btn btn-stop" id="stop-btn-A" onclick="stopRecording('A')" disabled>
+            <i class="fas fa-stop"></i> Dừng
+          </button>
+        </div>
+        <div class="log-area" id="log-A">Sẵn sàng kết nối...</div>
+      </div>
+    </div>
+
+    <!-- Chatbox for User B -->
+    <div class="chatbox" id="box-B">
+      <div class="chat-header">
+        <span><i class="fas fa-user-circle"></i> user B</span>
+        <span class="status"><span class="status-dot"></span> Đang hoạt động</span>
+      </div>
+      <div class="chat-messages" id="chat-B"></div>
+      <div class="chat-input">
+        <div class="chat-input-row">
+          <div class="file-input-container" id="file-container-B">
+            <label class="file-input-label" for="audio-B">
+              <i class="fas fa-file-upload"></i> Chọn file âm thanh hoặc văn bản
+            </label>
+            <input type="file" id="audio-B" accept="*" onchange="updateFileInput('B')">
+          </div>
+          <button class="btn" onclick="sendAudio('B')">
+            <i class="fas fa-paper-plane"></i> Gửi
+          </button>
+        </div>
+        <div class="chat-input-row">
+          <button class="btn btn-record" id="record-btn-B" onclick="startRecording('B')">
+            <i class="fas fa-microphone"></i> Ghi âm
+          </button>
+          <button class="btn btn-stop" id="stop-btn-B" onclick="stopRecording('B')" disabled>
+            <i class="fas fa-stop"></i> Dừng
+          </button>
+        </div>
+        <div class="log-area" id="log-B">Sẵn sàng kết nối...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let mediaRecorder = {};
+  let audioChunks = {};
+  let currentRole = '';
+
+  // Cập nhật giao diện khi có file được chọn
+  function updateFileInput(userId) {
+    const fileInput = document.getElementById(`audio-${userId}`);
+    const container = document.getElementById(`file-container-${userId}`);
+    
+    if (fileInput.files.length > 0) {
+      container.classList.add('has-file');
+      const fileName = fileInput.files[0].name;
+      const fileSize = (fileInput.files[0].size / 1024).toFixed(2);
+      container.querySelector('.file-input-label').innerHTML = 
+        `<i class="fas fa-check-circle"></i> ${fileName} (${fileSize} KB)`;
+    } else {
+      container.classList.remove('has-file');
+      container.querySelector('.file-input-label').innerHTML = 
+        '<i class="fas fa-file-upload"></i> Chọn file âm thanh hoặc văn bản';
+    }
+  }
+
+  // Chuyển đổi giữa các vai trò
+  function switchRole(role) {
+    currentRole = role;
+    document.getElementById("box-A").classList.remove('active', 'highlight');
+    document.getElementById("box-B").classList.remove('active', 'highlight');
+    
+    if (role === 'A') {
+      document.getElementById("box-A").classList.add('active');
+      setTimeout(() => {
+        document.getElementById("box-A").classList.add('highlight');
+      }, 300);
+    } else if (role === 'B') {
+      document.getElementById("box-B").classList.add('active');
+      setTimeout(() => {
+        document.getElementById("box-B").classList.add('highlight');
+      }, 300);
+    }
+    
+    loadMessages(role);
+  }
+
+  // Tải tin nhắn từ server
+  function loadMessages(userId) {
+    const logArea = document.getElementById(`log-${userId}`);
+    logArea.textContent = "Đang tải tin nhắn...";
+    logArea.classList.add('loading');
+    
+    fetch("/chat/messages")
+      .then(res => res.json())
+      .then(messages => {
+        ["A", "B"].forEach(id => {
+          const container = document.getElementById(`chat-${id}`);
+          container.innerHTML = "";
+          
+          messages.forEach(m => {
+            const div = document.createElement("div");
+            const isMine = m.from_user === id;
+            const directionClass = isMine ? 'sent' : 'received';
+            div.className = `message ${directionClass}`;
+            
+            // Tạo icon dựa trên loại file
+            let fileIcon = '<i class="fas fa-file-audio"></i>';
+            if (m.filename && m.filename.endsWith('.txt')) {
+              fileIcon = '<i class="fas fa-file-alt"></i>';
+            }
+            
+            const messageInfo = `
+              <div class="message-info">
+                <span class="message-info-item tooltip">
+                  ${fileIcon}
+                  ${m.filename || 'Không có tên'}
+                  <span class="tooltiptext">Tên file</span>
+                </span>
+                <span class="message-info-item tooltip">
+                  <i class="fas fa-weight-hanging"></i>
+                  ${m.filesize || '0'} KB
+                  <span class="tooltiptext">Kích thước</span>
+                </span>
+                <span class="message-info-item tooltip">
+                  <i class="fas fa-lock"></i>
+                  ${m.encode_time || '-'}s
+                  <span class="tooltiptext">Thời gian mã hóa</span>
+                </span>
+              </div>
+            `;
+            
+            div.innerHTML = `
+              ${messageInfo}
+              <button class="decrypt-btn" onclick="verify('${m.id}', '${id}')" id="decrypt-${m.id}-${id}">
+                <i class="fas fa-key"></i> Giải mã
+              </button>
+              <div class="timestamp">${m.timestamp || ''}</div>
+              <div id="play-${m.id}-${id}" class="file-preview"></div>
+            `;
+            container.appendChild(div);
+          });
+          
+          container.scrollTop = container.scrollHeight;
+        });
+        
+        logArea.classList.remove('loading');
+        logArea.textContent = `Đã tải ${messages.length} tin nhắn`;
+      })
+      .catch(err => {
+        logArea.classList.remove('loading');
+        logArea.textContent = "Lỗi khi tải tin nhắn: " + err.message;
+      });
+  }
+
+  // Gửi file âm thanh
+  function sendAudio(userId) {
+    const fileInput = document.getElementById(`audio-${userId}`);
+    if (!fileInput.files.length) {
+      showAlert(userId, "Vui lòng chọn file trước!", 'warning');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append("audio", fileInput.files[0]);
+    formData.append("user_id", userId);
+    
+    const logArea = document.getElementById(`log-${userId}`);
+    logArea.textContent = "Đang mã hóa và gửi file...";
+    logArea.classList.add('loading');
+    
+    fetch("/chat/send", { method: "POST", body: formData })
+      .then(res => res.json())
+      .then(data => {
+        loadMessages(currentRole);
+        fileInput.value = "";
+        document.getElementById(`file-container-${userId}`).classList.remove('has-file');
+        logArea.classList.remove('loading');
+        logArea.textContent = data.log || 'Gửi file thành công!';
+        showAlert(userId, "Tin nhắn đã được gửi và mã hóa!", 'success');
+      })
+      .catch(err => {
+        logArea.classList.remove('loading');
+        logArea.textContent = "Lỗi: " + err.message;
+        showAlert(userId, "Gửi tin nhắn thất bại!", 'danger');
+      });
+  }
+
+  // Bắt đầu ghi âm
+  function startRecording(userId) {
+    const logArea = document.getElementById(`log-${userId}`);
+    const recordBtn = document.getElementById(`record-btn-${userId}`);
+    const stopBtn = document.getElementById(`stop-btn-${userId}`);
+    
+    logArea.textContent = "Đang chuẩn bị ghi âm...";
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+    recordBtn.classList.add('recording');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        mediaRecorder[userId] = new MediaRecorder(stream);
+        mediaRecorder[userId].start();
+        audioChunks[userId] = [];
+        
+        mediaRecorder[userId].addEventListener("dataavailable", event => {
+          audioChunks[userId].push(event.data);
+        });
+        
+        logArea.textContent = "Đang ghi âm... Nhấn Dừng khi hoàn thành";
+      })
+      .catch(err => {
+        logArea.textContent = "Lỗi: " + err.message;
+        console.error("Lỗi ghi âm:", err);
+        recordBtn.disabled = false;
+        stopBtn.disabled = true;
+        recordBtn.classList.remove('recording');
+        showAlert(userId, "Không thể truy cập microphone!", 'danger');
+      });
+  }
+
+  // Dừng ghi âm và gửi
+  function stopRecording(userId) {
+    if (!mediaRecorder[userId]) return;
+    
+    const logArea = document.getElementById(`log-${userId}`);
+    const recordBtn = document.getElementById(`record-btn-${userId}`);
+    const stopBtn = document.getElementById(`stop-btn-${userId}`);
+    
+    logArea.textContent = "Đang xử lý bản ghi âm...";
+    logArea.classList.add('loading');
+    recordBtn.disabled = false;
+    stopBtn.disabled = true;
+    recordBtn.classList.remove('recording');
+    
+    mediaRecorder[userId].stop();
+    mediaRecorder[userId].addEventListener("stop", () => {
+      const blob = new Blob(audioChunks[userId], { type: 'audio/wav' });
+      const formData = new FormData();
+      formData.append("audio", blob, `recording-${Date.now()}.wav`);
+      formData.append("user_id", userId);
+      
+      fetch("/chat/send", { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+          loadMessages(currentRole);
+          logArea.classList.remove('loading');
+          logArea.textContent = data.log || 'Gửi bản ghi âm thành công!';
+          showAlert(userId, "Bản ghi âm đã được gửi!", 'success');
+        })
+        .catch(err => {
+          logArea.classList.remove('loading');
+          logArea.textContent = "Lỗi: " + err.message;
+          showAlert(userId, "Gửi bản ghi âm thất bại!", 'danger');
+        });
+      
+      // Dừng các track media
+      mediaRecorder[userId].stream.getTracks().forEach(track => track.stop());
+    });
+  }
+
+  // Xác minh và giải mã tin nhắn
+  function verify(id, userId) {
+    const btn = document.getElementById(`decrypt-${id}-${userId}`);
+    const playContainer = document.getElementById(`play-${id}-${userId}`);
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang giải mã...';
+    btn.classList.add('loading');
+    playContainer.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Đang xử lý...</div>';
+    
+    fetch(`/chat/verify/${id}`, { method: "POST" })
+      .then(res => res.json())
+      .then(data => {
+        btn.innerHTML = '<i class="fas fa-key"></i> Giải mã';
+        btn.classList.remove('loading');
+        
+        if (data.status === "success") {
+          playContainer.innerHTML = '';
+          
+          // Thêm thông tin giải mã
+          const decodeInfo = document.createElement("div");
+          decodeInfo.style.fontSize = "0.85rem";
+          decodeInfo.style.color = "var(--gray)";
+          decodeInfo.style.marginBottom = "10px";
+          decodeInfo.style.display = "flex";
+          decodeInfo.style.alignItems = "center";
+          decodeInfo.style.gap = "8px";
+          decodeInfo.innerHTML = `
+            <i class="fas fa-clock"></i> Giải mã: ${data.decode_time}s
+            <span style="margin-left: auto;">
+              <i class="fas fa-${data.file_type === 'audio' ? 'volume-up' : 'file-alt'}"></i> ${data.file_type === 'audio' ? 'Âm thanh' : 'Văn bản'}
+            </span>
+          `;
+          playContainer.appendChild(decodeInfo);
+
+          if (data.file_type === "audio") {
+            // Tạo audio player với autoplay
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.className = "audio-player";
+            audio.src = data.file + "?t=" + Date.now();
+            
+            // Thêm sự kiện để phát tự động khi đã tải xong
+            audio.addEventListener('canplaythrough', function() {
+              audio.play().catch(e => {
+                console.log("Autoplay prevented:", e);
+                // Hiển thị nút play thủ công nếu autoplay bị chặn
+                const playBtn = document.createElement("button");
+                playBtn.className = "btn";
+                playBtn.style.marginTop = "10px";
+                playBtn.innerHTML = '<i class="fas fa-play"></i> Phát âm thanh';
+                playBtn.onclick = function() {
+                  audio.play();
+                  playBtn.remove();
+                };
+                playContainer.appendChild(playBtn);
+              });
+            });
+            
+            playContainer.appendChild(audio);
+            
+            // Thêm nút tải xuống
+            const downloadBtn = document.createElement("a");
+            downloadBtn.href = data.file;
+            downloadBtn.className = "btn";
+            downloadBtn.style.marginTop = "10px";
+            downloadBtn.style.display = "inline-flex";
+            downloadBtn.style.alignItems = "center";
+            downloadBtn.style.gap = "8px";
+            downloadBtn.innerHTML = `
+              <i class="fas fa-download"></i> Tải xuống
+            `;
+            downloadBtn.download = data.original_name || "audio-decrypted.wav";
+            playContainer.appendChild(downloadBtn);
+          } else if (data.file_type === "text") {
+            fetch(data.file)
+              .then(res => res.text())
+              .then(text => {
+                const pre = document.createElement("pre");
+                pre.textContent = text;
+                pre.style.whiteSpace = "pre-wrap";
+                pre.style.wordBreak = "break-word";
+                pre.style.backgroundColor = "#f0f0f0";
+                pre.style.padding = "15px";
+                pre.style.borderRadius = "5px";
+                pre.style.marginBottom = "10px";
+                playContainer.appendChild(pre);
+                
+                const downloadBtn = document.createElement("a");
+                downloadBtn.href = data.file;
+                downloadBtn.className = "btn";
+                downloadBtn.style.display = "inline-flex";
+                downloadBtn.style.alignItems = "center";
+                downloadBtn.style.gap = "8px";
+                downloadBtn.innerHTML = `
+                  <i class="fas fa-download"></i> Tải xuống ${data.original_name || "file.txt"}
+                `;
+                downloadBtn.download = data.original_name || "file.txt";
+                playContainer.appendChild(downloadBtn);
+              });
+          } else {
+            // Hiển thị nút tải xuống cho các loại file khác
+            const downloadBtn = document.createElement("a");
+            downloadBtn.href = data.file;
+            downloadBtn.className = "btn";
+            downloadBtn.style.marginTop = "10px";
+            downloadBtn.style.display = "inline-flex";
+            downloadBtn.style.alignItems = "center";
+            downloadBtn.style.gap = "8px";
+            downloadBtn.innerHTML = `
+                <i class="fas fa-download"></i> Tải xuống ${data.original_name || "file"}
+            `;
+            downloadBtn.download = data.original_name || "file";
+            playContainer.appendChild(downloadBtn);
+        }
+          
+          showAlert(userId, "Giải mã thành công!", 'success');
+        } else {
+          playContainer.innerHTML = `
+            <div style="color: var(--danger); padding: 10px; background: rgba(247, 37, 133, 0.1); border-radius: 5px;">
+              <i class="fas fa-times-circle"></i> ${data.reason || 'Giải mã thất bại'}
+                        </div>
+          `;
+          showAlert(userId, "Giải mã thất bại!", 'danger');
+        }
+      })
+      .catch(err => {
+        btn.innerHTML = '<i class="fas fa-key"></i> Giải mã';
+        btn.classList.remove('loading');
+        playContainer.innerHTML = `
+          <div style="color: var(--danger); padding: 10px; background: rgba(247, 37, 133, 0.1); border-radius: 5px;">
+            <i class="fas fa-times-circle"></i> Lỗi: ${err.message}
+          </div>
+        `;
+        showAlert(userId, "Lỗi khi giải mã!", 'danger');
+      });
+  }
+
+  // Hiển thị thông báo
+  function showAlert(userId, message, type) {
+    const chatContainer = document.getElementById(`chat-${userId}`);
+    const alertDiv = document.createElement("div");
+    alertDiv.className = `message ${type === 'success' ? 'sent' : 'received'}`;
+    alertDiv.style.backgroundColor = type === 'success' ? 'var(--success)' : 
+                                   type === 'warning' ? 'var(--warning)' : 'var(--danger)';
+    alertDiv.style.color = 'white';
+    alertDiv.style.animation = 'fadeInUp 0.3s ease forwards';
+    alertDiv.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                         type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i>
+        ${message}
+      </div>
+      <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+    `;
+    
+    chatContainer.appendChild(alertDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Tự động ẩn thông báo sau 5 giây
+    setTimeout(() => {
+      alertDiv.style.opacity = '0';
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 300);
+    }, 5000);
+  }
+
+  // Khởi tạo ứng dụng
+  document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra xem trình duyệt có hỗ trợ MediaRecorder không
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      ["A", "B"].forEach(id => {
+        document.getElementById(`record-btn-${id}`).disabled = true;
+        document.getElementById(`log-${id}`).textContent = 
+          "Trình duyệt của bạn không hỗ trợ tính năng ghi âm. Vui lòng dùng Chrome hoặc Firefox.";
+      });
+    }
+    
+    // Thêm hiệu ứng cho các tin nhắn khi tải
+    setTimeout(() => {
+      document.querySelectorAll('.message').forEach((msg, i) => {
+        msg.style.animationDelay = `${i * 0.1}s`;
+      });
+    }, 500);
+  });
+</script>
+</body>
+</html>

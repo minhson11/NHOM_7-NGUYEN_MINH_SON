@@ -1,0 +1,174 @@
+<!-- receive.html - Giao diện nhận và xác minh tin nhắn. -->
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure Voice Chat - Nhận tin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      padding: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #ccc;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h2 {
+      color: #2d3748;
+    }
+    pre {
+      background: #edf2f7;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    button {
+      padding: 10px 20px;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #2b6cb0;
+    }
+    .hidden {
+      display: none;
+    }
+    .result {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    .progress-container {
+      margin-top: 20px;
+      background-color: #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 16px;
+      width: 100%;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #38a169;
+      transition: width 2.5s ease;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>📥 Nhận gói tin mã hóa</h2>
+
+  <p><strong>Chi tiết gói tin:</strong></p>
+  <pre id="packet-display"></pre>
+
+  <button onclick="verifyPacket()">🛡️ Xác minh và giải mã</button>
+
+  <div class="progress-container hidden" id="progress-box">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <div class="result" id="result-message"></div>
+
+  <audio id="audio-player" controls class="hidden" style="margin-top:15px;">
+    <source src="{{ url_for('static', filename='decrypted.wav') }}" type="audio/wav">
+    Trình duyệt không hỗ trợ phát âm thanh.
+  </audio>
+</div>
+
+<!-- Gói tin truyền từ server -->
+<div id="packet-data" data-packet='{{ packet | tojson | safe }}' class="hidden"></div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const packetStr = document.getElementById('packet-data').dataset.packet;
+    const packet = JSON.parse(packetStr);
+
+    // Hiển thị chi tiết gói tin
+    const display = `
+🔐 AES Key (encrypted):\n${packet.encrypted_aes_key.slice(0, 60)}...
+🧊 IV: ${packet.iv}
+🔒 Ciphertext: ${packet.cipher.slice(0, 60)}...
+#️⃣ Hash: ${packet.hash}
+🖊️ Chữ ký: ${packet.sig.slice(0, 60)}...
+    `;
+    document.getElementById("packet-display").textContent = display;
+
+    window.verifyPacket = async function () {
+      const progressBox = document.getElementById('progress-box');
+      const progressBar = document.getElementById('progress-bar');
+      const msgBox = document.getElementById('result-message');
+      const audioPlayer = document.getElementById('audio-player');
+      const audioSource = audioPlayer.querySelector("source");
+
+      // Reset trạng thái
+      msgBox.textContent = '';
+      audioPlayer.classList.add('hidden');
+
+      // Hiện progress bar
+      progressBox.classList.remove('hidden');
+      progressBar.style.width = '100%';
+
+      // Giả lập loading
+      await new Promise(r => setTimeout(r, 2500));
+
+      // Gửi yêu cầu xác minh tới server
+      const response = await fetch('/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(packet)
+      });
+
+      const result = await response.json();
+
+      progressBox.classList.add('hidden');
+
+      if (result.status === "ACK") {
+        msgBox.textContent = "✅ Xác minh thành công: Dữ liệu hợp lệ và đã được giải mã!";
+        msgBox.style.color = "green";
+
+        // Xử lý theo loại file
+        if (packet.file_type === "audio") {
+            // Ép reload file âm thanh và tránh cache
+            const timestamp = new Date().getTime();
+            audioSource.src = `/static/decrypted.wav?t=${timestamp}`;
+            audioPlayer.load();
+            audioPlayer.classList.remove('hidden');
+            audioPlayer.play().catch(err => {
+                console.warn("⚠️ Trình duyệt không tự động phát:", err);
+            });
+        } else if (packet.file_type === "text") {
+            // Hiển thị nội dung text
+            fetch('/static/decrypted.txt')
+                .then(res => res.text())
+                .then(text => {
+                    const pre = document.createElement("pre");
+                    pre.textContent = text;
+                    document.querySelector(".card").appendChild(pre);
+                });
+        }
+        } else {
+            msgBox.textContent = "❌ Xác minh thất bại: " + result.reason;
+            msgBox.style.color = "red";
+          }
+
+          setTimeout(() => {
+            progressBar.style.width = '0%';
+          }, 500);
+        };
+      });
+</script>
+
+</body>
+</html>
